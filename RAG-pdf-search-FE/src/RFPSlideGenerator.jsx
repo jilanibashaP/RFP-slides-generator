@@ -184,9 +184,9 @@ export default function RFPSlideGenerator() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Panel - Configuration */}
-          <div className="space-y-6">
+          <div className="space-y-6 overflow-visible">
             {/* Upload Section */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-6 overflow-visible">
               <h2 className="text-lg font-bold text-slate-800 mb-4">📤 Upload Documents</h2>
               
               <div className="space-y-4">
@@ -234,18 +234,18 @@ export default function RFPSlideGenerator() {
             </div>
 
             {/* Generation Settings */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-slate-200 p-6 overflow-visible">
               <h2 className="text-lg font-bold text-slate-800 mb-4">🎨 Configure Slides</h2>
               
-              <div className="space-y-4">
-                <div>
+              <div className="space-y-4 overflow-visible">
+                <div className="relative" style={{zIndex: 9999}}>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Select RFP Document *
                   </label>
                   <select
                     value={selectedRfp}
                     onChange={(e) => setSelectedRfp(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-slate-900 font-medium cursor-pointer"
                   >
                     <option value="">-- Select RFP --</option>
                     {rfpFiles.map((file, idx) => (
@@ -256,14 +256,14 @@ export default function RFPSlideGenerator() {
                   </select>
                 </div>
 
-                <div>
+                <div className="relative" style={{zIndex: 9998}}>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Brand Guide (Optional)
                   </label>
                   <select
                     value={selectedBrand}
                     onChange={(e) => setSelectedBrand(e.target.value)}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 font-medium cursor-pointer"
                   >
                     <option value="">-- Default Style --</option>
                     {brandGuides.map((guide, idx) => (

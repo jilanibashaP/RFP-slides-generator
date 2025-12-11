@@ -60,3 +60,27 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Fix dropdown visibility */
+select {
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+}
+
+select option {
+  padding: 8px 12px !important;
+  background-color: white !important;
+  color: black !important;
+}
+
+/* Ensure dropdowns are not clipped */
+.overflow-visible {
+  overflow: visible !important;
+}
+
+/* Force dropdown to be above other elements */
+select:focus {
+  z-index: 9999 !important;
+  position: relative !important;
+}
