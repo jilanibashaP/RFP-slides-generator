@@ -255,14 +255,6 @@ This project is created as part of a technical assignment for Pixis GenAI Engine
 
 ---
 
-## 👤 Author
-
-**Assignment Submission**  
-Pixis GenAI Engineer Technical Assessment  
-December 2025
-
----
-
 ## 📚 Documentation
 
 For detailed technical documentation, see [`PIXIS_README.md`](./PIXIS_README.md)
