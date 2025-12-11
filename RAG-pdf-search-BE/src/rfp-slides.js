@@ -5,6 +5,7 @@ const OpenAI = require('openai');
 const weaviate = require('weaviate-ts-client').default;
 const express = require('express');
 const multer = require('multer');
+const PptxGenJS = require('pptxgenjs');
 
 // Load environment variables
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -412,6 +413,305 @@ app.get('/slide-history', async (req, res) => {
   }
 });
 
+// Generate PowerPoint from slides
+app.post('/generate-pptx', async (req, res) => {
+  try {
+    const { slides, rfpFilename, brandColors } = req.body;
+
+    if (!slides || !Array.isArray(slides) || slides.length === 0) {
+      return res.status(400).json({ error: 'Slides array is required' });
+    }
+
+    // Create presentation
+    const pptx = new PptxGenJS();
+    
+    // Set presentation properties
+    pptx.author = 'RFP Slide Generator';
+    pptx.company = 'Pixis AI';
+    pptx.title = `RFP Response - ${rfpFilename || 'Presentation'}`;
+    pptx.subject = 'RFP Response Presentation';
+    
+    // Default colors (can be overridden by brand colors)
+    const primaryColor = brandColors?.primary || '4F46E5'; // Indigo
+    const secondaryColor = brandColors?.secondary || '7C3AED'; // Purple
+    const accentColor = brandColors?.accent || '3B82F6'; // Blue
+    const textColor = '1E293B'; // Slate
+
+    // Generate slides
+    slides.forEach((slideData, index) => {
+      const slide = pptx.addSlide();
+      
+      // Add slide number (bottom right)
+      slide.addText(`${slideData.slideNumber || index + 1}`, {
+        x: 9.2,
+        y: 5.2,
+        w: 0.6,
+        h: 0.3,
+        fontSize: 10,
+        color: '94A3B8',
+        align: 'right'
+      });
+
+      // Slide layouts based on type
+      switch (slideData.layout) {
+        case 'title':
+          // Title slide with centered content
+          slide.background = { color: primaryColor };
+          
+          // Add CONFIDENTIAL disclaimer
+          if (index === 0) {
+            slide.addText('CONFIDENTIAL', {
+              x: 0.5,
+              y: 0.3,
+              w: 9,
+              h: 0.5,
+              fontSize: 14,
+              bold: true,
+              color: 'FFFFFF',
+              align: 'center'
+            });
+          }
+          
+          // Main title
+          slide.addText(slideData.title, {
+            x: 1,
+            y: 2.2,
+            w: 8,
+            h: 1.2,
+            fontSize: 44,
+            bold: true,
+            color: 'FFFFFF',
+            align: 'center',
+            valign: 'middle'
+          });
+          
+          // Subtitle or content
+          if (slideData.content) {
+            const contentText = Array.isArray(slideData.content) 
+              ? slideData.content.join(' • ') 
+              : slideData.content;
+            
+            slide.addText(contentText, {
+              x: 1.5,
+              y: 3.8,
+              w: 7,
+              h: 1,
+              fontSize: 18,
+              color: 'E2E8F0',
+              align: 'center'
+            });
+          }
+          
+          // Add decorative line
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 3.5,
+            y: 3.5,
+            w: 3,
+            h: 0.05,
+            fill: { color: accentColor }
+          });
+          break;
+
+        case 'bullets':
+          // Header with gradient
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 0,
+            y: 0,
+            w: 10,
+            h: 1.2,
+            fill: { type: 'solid', color: primaryColor }
+          });
+          
+          // Title
+          slide.addText(slideData.title, {
+            x: 0.5,
+            y: 0.3,
+            w: 9,
+            h: 0.6,
+            fontSize: 32,
+            bold: true,
+            color: 'FFFFFF'
+          });
+          
+          // Bullet points
+          if (Array.isArray(slideData.content)) {
+            slideData.content.forEach((bullet, idx) => {
+              slide.addText(bullet, {
+                x: 0.8,
+                y: 1.8 + (idx * 0.6),
+                w: 8.4,
+                h: 0.5,
+                fontSize: 16,
+                color: textColor,
+                bullet: { type: 'number', code: '•' }
+              });
+            });
+          }
+          break;
+
+        case 'twoColumn':
+          // Header
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 0,
+            y: 0,
+            w: 10,
+            h: 1,
+            fill: { color: primaryColor }
+          });
+          
+          slide.addText(slideData.title, {
+            x: 0.5,
+            y: 0.25,
+            w: 9,
+            h: 0.5,
+            fontSize: 28,
+            bold: true,
+            color: 'FFFFFF'
+          });
+          
+          // Two columns
+          const midContent = Array.isArray(slideData.content) 
+            ? Math.ceil(slideData.content.length / 2) 
+            : 1;
+          
+          const leftContent = Array.isArray(slideData.content) 
+            ? slideData.content.slice(0, midContent) 
+            : [slideData.content];
+          
+          const rightContent = Array.isArray(slideData.content) 
+            ? slideData.content.slice(midContent) 
+            : [];
+          
+          // Left column
+          leftContent.forEach((item, idx) => {
+            slide.addText(item, {
+              x: 0.5,
+              y: 1.5 + (idx * 0.5),
+              w: 4.5,
+              h: 0.4,
+              fontSize: 14,
+              color: textColor,
+              bullet: true
+            });
+          });
+          
+          // Right column
+          rightContent.forEach((item, idx) => {
+            slide.addText(item, {
+              x: 5.2,
+              y: 1.5 + (idx * 0.5),
+              w: 4.5,
+              h: 0.4,
+              fontSize: 14,
+              color: textColor,
+              bullet: true
+            });
+          });
+          break;
+
+        case 'chart':
+          // Header
+          slide.addShape(pptx.ShapeType.rect, {
+            x: 0,
+            y: 0,
+            w: 10,
+            h: 1,
+            fill: { color: primaryColor }
+          });
+          
+          slide.addText(slideData.title, {
+            x: 0.5,
+            y: 0.25,
+            w: 9,
+            h: 0.5,
+            fontSize: 28,
+            bold: true,
+            color: 'FFFFFF'
+          });
+          
+          // Chart placeholder text
+          slide.addText('📊 Chart Data Visualization', {
+            x: 2,
+            y: 2.5,
+            w: 6,
+            h: 1,
+            fontSize: 24,
+            color: textColor,
+            align: 'center'
+          });
+          
+          // Display chart data as text
+          if (slideData.content && typeof slideData.content === 'object') {
+            const chartInfo = JSON.stringify(slideData.content, null, 2);
+            slide.addText(chartInfo, {
+              x: 1,
+              y: 3.8,
+              w: 8,
+              h: 1.5,
+              fontSize: 12,
+              color: '64748B',
+              fontFace: 'Courier New',
+              align: 'left'
+            });
+          }
+          break;
+
+        default:
+          // Default text layout
+          slide.addText(slideData.title, {
+            x: 0.5,
+            y: 0.5,
+            w: 9,
+            h: 0.8,
+            fontSize: 32,
+            bold: true,
+            color: primaryColor
+          });
+          
+          const contentText = Array.isArray(slideData.content) 
+            ? slideData.content.join('\n\n') 
+            : slideData.content;
+          
+          slide.addText(contentText, {
+            x: 0.7,
+            y: 1.8,
+            w: 8.6,
+            h: 3.5,
+            fontSize: 16,
+            color: textColor
+          });
+      }
+      
+      // Add presenter notes
+      if (slideData.notes) {
+        slide.addNotes(slideData.notes);
+      }
+    });
+
+    // Generate file
+    const outputPath = path.join(__dirname, 'uploads', `presentation_${Date.now()}.pptx`);
+    await pptx.writeFile({ fileName: outputPath });
+
+    // Send file
+    res.download(outputPath, `${rfpFilename || 'presentation'}.pptx`, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+      }
+      // Clean up file after sending
+      fs.unlink(outputPath, (unlinkErr) => {
+        if (unlinkErr) console.error('Error deleting temp file:', unlinkErr);
+      });
+    });
+
+  } catch (error) {
+    console.error('Error generating PowerPoint:', error);
+    res.status(500).json({
+      error: 'Failed to generate PowerPoint',
+      details: error.message
+    });
+  }
+});
+
 // Start server
 async function startServer() {
   try {
@@ -422,6 +722,7 @@ async function startServer() {
       console.log(`🚀 RFP to Slide Generator running on port ${PORT}`);
       console.log(`📄 Upload RFP/Brand Guide: POST /upload`);
       console.log(`🎨 Generate Slides: POST /generate-slides`);
+      console.log(`📊 Generate PowerPoint: POST /generate-pptx`);
       console.log(`📁 List Files: GET /files`);
       console.log(`📊 Slide History: GET /slide-history`);
       console.log(`❤️  Health Check: GET /check`);

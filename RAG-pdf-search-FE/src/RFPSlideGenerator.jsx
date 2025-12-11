@@ -136,6 +136,46 @@ export default function RFPSlideGenerator() {
     link.click();
   };
 
+  const downloadAsPowerPoint = async () => {
+    if (!generatedSlides) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/generate-pptx`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slides: generatedSlides.slides,
+          rfpFilename: generatedSlides.rfpFilename,
+          brandColors: {
+            primary: '4F46E5',
+            secondary: '7C3AED',
+            accent: '3B82F6'
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate PowerPoint');
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${generatedSlides.rfpFilename || 'presentation'}.pptx`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      alert('✅ PowerPoint downloaded successfully!');
+    } catch (error) {
+      alert(`❌ PowerPoint generation error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const renderSlideContent = (slide) => {
     if (Array.isArray(slide.content)) {
       return (
@@ -318,13 +358,23 @@ export default function RFPSlideGenerator() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-bold text-slate-800">📊 Generated Slides</h2>
               {generatedSlides && (
-                <button
-                  onClick={downloadAsJSON}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm font-medium"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download JSON</span>
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={downloadAsPowerPoint}
+                    disabled={isLoading}
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 transition-all text-sm font-medium shadow-lg"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download PowerPoint</span>
+                  </button>
+                  <button
+                    onClick={downloadAsJSON}
+                    className="flex items-center space-x-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all text-sm font-medium"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>JSON</span>
+                  </button>
+                </div>
               )}
             </div>
 
