@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Uploads and generated content
+RAG-pdf-search-BE/src/uploads/
+RAG-pdf-search-BE/src/user_uploads/
+RAG-pdf-search-BE/uploads/
+RAG-pdf-search-BE/user_uploads/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+*.test.js
+*.spec.js
